@@ -5,6 +5,7 @@
 	health = 250
 	caste = "p"
 	large = 1
+	ventcrawler = 0
 	icon = 'icons/mob/alienqueen.dmi'
 	icon_state = "alienp"
 	pixel_x = -16
@@ -36,7 +37,7 @@
 		name = text("alien praetorian ([rand(1, 1000)])")
 	real_name = name
 	alien_organs += new /obj/item/organ/internal/xenos/plasmavessel/queen
-	alien_organs += new /obj/item/organ/internal/xenos/acidgland/large
-	alien_organs += new /obj/item/organ/internal/xenos/neurotoxin/large
+	alien_organs += new /obj/item/organ/internal/xenos/large_acidgland
+	alien_organs += new /obj/item/organ/internal/xenos/large_neurotoxin
 	..()
 

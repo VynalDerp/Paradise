@@ -34,7 +34,7 @@
 
 
 	var/stored_plasma = 0
-	var/max_plasma = 500
+	var/max_plasma = 100
 	var/heal_rate = 5
 	var/plasma_rate = 10
 
@@ -56,6 +56,7 @@
 	icon_state = "plasma_large"
 	stored_plasma = 200
 	max_plasma = 500
+	plasma_rate = 15
 
 /obj/item/organ/internal/xenos/plasmavessel/sentinel
 	stored_plasma = 100
@@ -105,16 +106,16 @@
 /obj/item/organ/internal/xenos/acidgland/
 	name = "xeno acid gland"
 	icon_state = "acid"
-	parent_organ = "head"
+	parent_organ = "chest"
 	slot = "acid"
 	origin_tech = "biotech=5;materials=2;combat=2"
 	alien_powers = list(/mob/living/carbon/alien/humanoid/proc/corrosive_acid)
 
 
-/obj/item/organ/internal/xenos/acidgland/large
+/obj/item/organ/internal/xenos/large_acidgland
 	name = "large xeno acid gland"
 	icon_state = "acid"
-	parent_organ = "head"
+	parent_organ = "chest"
 	slot = "acid"
 	origin_tech = "biotech=5;materials=3;combat=3"
 	alien_powers = list(/mob/living/carbon/alien/humanoid/proc/strong_corrosive_acid)
@@ -148,10 +149,18 @@
 	icon_state = "neurotox"
 	parent_organ = "head"
 	slot = "neurotox"
-	origin_tech = "biotech=5;combat=5"
+	origin_tech = "biotech=4;combat=4"
 	alien_powers = list(/mob/living/carbon/alien/humanoid/proc/neurotoxin)
 
-/obj/item/organ/internal/xenos/neurotoxin/large
+/obj/item/organ/internal/xenos/neurotoxin/insert(mob/living/carbon/M, special = 0)
+	..()
+	M.AddSpell(new /obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin)
+
+/obj/item/organ/internal/xenos/neurotoxin/remove(mob/living/carbon/M, special = 0)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin)
+	. = ..()
+
+/obj/item/organ/internal/xenos/large_neurotoxin
 	name = "large xeno neurotoxin gland"
 	icon_state = "neurotox"
 	parent_organ = "head"
@@ -159,8 +168,16 @@
 	origin_tech = "biotech=5;combat=5"
 	alien_powers = list(/mob/living/carbon/alien/humanoid/proc/strong_neurotoxin)
 
+/obj/item/organ/internal/xenos/large_neurotoxin/insert(mob/living/carbon/M, special = 0)
+	..()
+	M.AddSpell(new /obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin)
+
+/obj/item/organ/internal/xenos/large_neurotoxin/remove(mob/living/carbon/M, special = 0)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin)
+	. = ..()
+
 /obj/item/organ/internal/xenos/resinspinner
-	name = "xeno resin organ"//...there tiger....
+	name = "xeno resin spinner"//...there tiger....
 	parent_organ = "mouth"
 	icon_state = "liver-x"
 	slot = "spinner"

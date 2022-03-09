@@ -40,6 +40,7 @@
 	for(var/X in actions)
 		var/datum/action/A = X
 		A.Grant(M)
+
 	if(vital)
 		M.update_stat("Vital organ inserted")
 	STOP_PROCESSING(SSobj, src)

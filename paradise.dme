@@ -405,6 +405,7 @@
 #include "code\datums\outfits\vv_outfit.dm"
 #include "code\datums\ruins\lavaland.dm"
 #include "code\datums\ruins\space.dm"
+#include "code\datums\spells\alien.dm"
 #include "code\datums\spells\area_teleport.dm"
 #include "code\datums\spells\banana_touch.dm"
 #include "code\datums\spells\bloodcrawl.dm"

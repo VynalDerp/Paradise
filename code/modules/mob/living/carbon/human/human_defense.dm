@@ -622,25 +622,23 @@ emp_act
 			add_attack_logs(M, src, "Alien attacked")
 			updatehealth("alien attack")
 
-		if(M.a_intent == INTENT_DISARM) //Runs a check to tackle based off of armor values, with multiplication for leeway. If tackle fails, it checks for disarm. If disarm fails, play failure sound.
+		if(M.a_intent == INTENT_DISARM) //Runs a check to tackle with stamina damage based off of armor values, with multiplication for leeway. Remove nulled disarm code at a later date.
 			var/obj/item/organ/external/affecting = get_organ("chest")
-			var/probability = 100 - run_armor_check(affecting, MELEE) * XENO_ARMOR_MULTIPLIER
-			probability = clamp(probability, 20, 60)
+			var/armor = 100 - run_armor_check(affecting, MELEE) * XENO_ARMOR_MULTIPLIER
+			armor = clamp(armor, 10, 30)
 
-			if(prob(probability))
-				Weaken(4)
-				playsound(loc, 'sound/weapons/pierce.ogg', 25, 1, -1)
-				add_attack_logs(M, src, "Alien tackled")
-				visible_message("<span class='danger'>[M] has tackled down [src]!</span>")
-			else if(prob(30))
-				drop_item()
-				playsound(loc, 'sound/weapons/slash.ogg', 25, TRUE, -1)
-				add_attack_logs(M, src, "Disarmed")
-				visible_message("<span class='danger'>[M] disarms [src]!</span>", "<span class='userdanger'>[M] disarms you!</span>", "<span class='hear'>You hear aggressive shuffling!</span>")
-				to_chat(M, "<span class='danger'>You disarm [src]!</span>")
-			else
-				playsound(loc, 'sound/weapons/punchmiss.ogg', 25, 1, -1)
-				visible_message("<span class='danger'>[M] has attempted to disarm [src]!</span>")
+			adjustStaminaLoss(armor)
+			playsound(loc, 'sound/weapons/pierce.ogg', 25, 1, -1)
+			add_attack_logs(M, src, "Alien tackle attempt")
+			visible_message("<span class='danger'>[M] has pushed [src]!</span>")
+
+			//if(prob(20))
+				//drop_item()
+				//playsound(loc, 'sound/weapons/slash.ogg', 25, TRUE, -1)
+				//add_attack_logs(M, src, "Disarmed")
+				//visible_message("<span class='danger'>[M] disarms [src]!</span>", "<span class='userdanger'>[M] disarms you!</span>", "<span class='hear'>You hear aggressive shuffling!</span>")
+				//to_chat(M, "<span class='danger'>You disarm [src]!</span>")
+
 
 	#undef XENO_ARMOR_MULTIPLIER
 

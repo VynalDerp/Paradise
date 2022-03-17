@@ -51,12 +51,27 @@
 	max_plasma = 500
 	plasma_rate = 25
 
+/obj/item/organ/internal/xenos/plasmavessel/queen/insert(mob/living/carbon/M, special = 0)
+	..()
+	M.AddSpell(new /obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds)
+
+/obj/item/organ/internal/alien/plasmavessel/queen/remove(mob/living/carbon/M, special = 0)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds)
+	. =..()
 /obj/item/organ/internal/xenos/plasmavessel/drone
 	name = "large xeno plasma vessel"
 	icon_state = "plasma_large"
 	stored_plasma = 200
 	max_plasma = 500
 	plasma_rate = 15
+
+/obj/item/organ/internal/xenos/plasmavessel/drone/insert(mob/living/carbon/M, special = 0)
+	..()
+	M.AddSpell(new /obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds)
+
+/obj/item/organ/internal/alien/plasmavessel/drone/remove(mob/living/carbon/M, special = 0)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds)
+	. =..()
 
 /obj/item/organ/internal/xenos/plasmavessel/sentinel
 	stored_plasma = 100

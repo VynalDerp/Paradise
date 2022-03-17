@@ -56,8 +56,9 @@
 	user.newtonian_move(get_dir(U, T))
 
 	/*var/mob/living/carbon/user = usr
+
 	if(user.get_organ_slot("plasmavessel"))
-		if(user.powerc < required_plasma)
+		if(user.powerc <= required_plasma)
 			user.adjustPlasma(-100)*/
 
 	return TRUE
@@ -99,10 +100,43 @@
 	if(!isturf(U) || !isturf(T))
 		return FALSE
 
-	var/obj/item/projectile/bullet/neurotoxin/NT = new neurotoxin_type(user.loc)
+	var/obj/item/projectile/bullet/neurotoxin/NT = new neurotoxin_type(user.loc) //notable: this is identical to normal neurotoxin. Needs new projectile.
 	NT.current = get_turf(user)
 	NT.preparePixelProjectile(target, get_turf(target), user)
 	NT.fire()
 	user.newtonian_move(get_dir(U, T))
 
 	return TRUE
+
+/obj/effect/proc_holder/spell/aoe_turf/alien/
+	name = "Alien Spell"
+	desc = "If you see this, someone messed up! Please report it!"
+	action_icon = 'icons/mob/actions/actions_xeno.dmi'
+	clothes_req = FALSE
+	range = 1
+	cooldown_min = 1
+	action_background_icon_state = "bg_alien"
+	var/required_plasma = 0
+
+/obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds
+	name = "Plant Weeds"
+	desc = "Plants some alien weeds"
+	range = 1
+	charge_max = 250
+	clothes_req = 0
+	action_icon_state = "alien_plant"
+	cooldown_min = 5
+	required_plasma = 25
+
+/obj/effect/proc_holder/spell/aoe_turf/plantweeds/cast(list/targets, mob/user = usr) //does not work. ripped straight from og ability code, needs new solution
+	to_chat(user, "<span class='shadowling'>You plant a weed.</span>")
+	playsound(user.loc, 'sound/effects/ghost2.ogg', 50, 1)
+
+	if(locate(/obj/structure/alien/weeds/node) in get_turf(src))
+		to_chat(src, "<span class='noticealien'>There's already a weed node here.</span>")
+		return
+
+	else
+		new /obj/structure/alien/weeds/node(loc)
+
+	return

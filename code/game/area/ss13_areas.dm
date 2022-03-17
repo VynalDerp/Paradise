@@ -293,14 +293,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/shuttle/research/outpost
 	icon_state = "shuttle"
 
-/area/shuttle/vox
-	name = "\improper Vox Skipjack"
-	icon_state = "shuttle"
-
-/area/shuttle/vox/station
-	name = "\improper Vox Skipjack"
-	icon_state = "yellow"
-
 /area/shuttle/salvage
 	name = "\improper Salvage Ship"
 	icon_state = "yellow"
@@ -980,10 +972,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	name = "\improper Chapel Office"
 	icon_state = "chapeloffice"
 
-/area/escapepodbay
-	name = "\improper Escape Shuttle Hallway Podbay"
-	icon_state = "escape"
-
 /area/lawoffice
 	name = "\improper Law Office"
 	icon_state = "law"
@@ -1111,14 +1099,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/engine/chiefs_office
 	name = "\improper Chief Engineer's office"
 	icon_state = "engine_control"
-
-/area/engine/mechanic_workshop
-	name = "\improper Mechanic Workshop"
-	icon_state = "engine"
-
-/area/engine/mechanic_workshop/hanger
-	name = "\improper Hanger Bay"
-	icon_state = "engine"
 
 /area/engine/supermatter
 	name = "\improper Supermatter Engine"
@@ -1379,8 +1359,8 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 
 /area/security/brig/prison_break()
 	for(var/obj/structure/closet/secure_closet/brig/temp_closet in src)
-		temp_closet.locked = 0
-		temp_closet.icon_state = temp_closet.icon_closed
+		temp_closet.locked = FALSE
+		temp_closet.close()
 	for(var/obj/machinery/door_timer/temp_timer in src)
 		temp_timer.releasetime = 1
 	..()
@@ -1399,7 +1379,8 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/security/prison/prison_break()
 	for(var/obj/structure/closet/secure_closet/brig/temp_closet in src)
 		temp_closet.locked = 0
-		temp_closet.icon_state = temp_closet.icon_closed
+		temp_closet.close()
+		temp_closet.update_icon()
 	for(var/obj/machinery/door_timer/temp_timer in src)
 		temp_timer.releasetime = 1
 	..()
@@ -1458,10 +1439,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 	icon_state = "sec_prison_lockers"
 	can_get_auto_cryod = FALSE
 
-/area/security/medbay
-	name = "\improper Security Medbay"
-	icon_state = "security_medbay"
-
 /area/security/prisonershuttle
 	name = "\improper Security Prisoner Shuttle"
 	icon_state = "security"
@@ -1487,10 +1464,6 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/security/hos
 	name = "\improper Head of Security's Office"
 	icon_state = "sec_hos"
-
-/area/security/podbay
-	name = "\improper Security Podbay"
-	icon_state = "securitypodbay"
 
 /area/security/detectives_office
 	name = "\improper Detective's Office"
@@ -1544,7 +1517,7 @@ NOTE: there are two lists of areas in the end of this file: centcom and station 
 /area/security/vacantoffice2
 	name = "\improper Vacant Office"
 	icon_state = "security"
-	
+
 /area/security/permasolitary
 	name = "Solitary Confinement"
 	icon_state = "solitary"
@@ -2233,7 +2206,6 @@ GLOBAL_LIST_INIT(the_station_areas, list(
 	/area/holodeck,
 	/area/library,
 	/area/chapel,
-	/area/escapepodbay,
 	/area/lawoffice,
 	/area/magistrateoffice,
 	/area/clownoffice,

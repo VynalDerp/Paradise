@@ -84,7 +84,7 @@ GLOBAL_VAR_INIT(sent_strike_team, 0)
 				R.real_name = R.name
 				R.mind = new
 				R.mind.current = R
-				R.mind.original = R
+				R.mind.set_original_mob(R)
 				R.mind.assigned_role = SPECIAL_ROLE_DEATHSQUAD
 				R.mind.special_role = SPECIAL_ROLE_DEATHSQUAD
 				R.mind.offstation_role = TRUE
@@ -188,7 +188,7 @@ GLOBAL_VAR_INIT(sent_strike_team, 0)
 	if(is_leader)
 		equip_to_slot_or_del(new /obj/item/disk/nuclear/unrestricted(src), slot_in_backpack)
 	else
-		equip_to_slot_or_del(new /obj/item/grenade/plastic/x4(src), slot_in_backpack)
+		equip_to_slot_or_del(new /obj/item/grenade/plastic/c4/x4(src), slot_in_backpack)
 
 
 	equip_to_slot_or_del(new /obj/item/melee/energy/sword/saber(src), slot_l_store)

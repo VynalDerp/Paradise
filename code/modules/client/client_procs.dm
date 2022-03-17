@@ -125,64 +125,6 @@
 	if(GLOB.configuration.logging.href_logging)
 		log_href("[src] (usr:[usr]\[[COORD(usr)]\]) : [hsrc ? "[hsrc] " : ""][href]")
 
-	if(href_list["karmashop"])
-		if(!GLOB.configuration.general.enable_karma)
-			to_chat(src, "Karma is disabled on this server.")
-			return
-
-		switch(href_list["karmashop"])
-			if("tab")
-				karma_tab = text2num(href_list["tab"])
-				karmashopmenu()
-				return
-			if("shop")
-				if(href_list["KarmaBuy"])
-					var/karma=verify_karma()
-					if(isnull(karma)) //Doesn't display anything if karma database is down.
-						return
-					switch(href_list["KarmaBuy"])
-						if("1")
-							karma_purchase(karma,5,"job","Barber")
-						if("2")
-							karma_purchase(karma,5,"job","Brig Physician")
-						if("3")
-							karma_purchase(karma,30,"job","Nanotrasen Representative")
-						if("5")
-							karma_purchase(karma,30,"job","Blueshield")
-						if("6")
-							karma_purchase(karma,30,"job","Mechanic")
-						if("7")
-							karma_purchase(karma,45,"job","Magistrate")
-						if("9")
-							karma_purchase(karma,30,"job","Security Pod Pilot")
-					return
-				if(href_list["KarmaBuy2"])
-					var/karma=verify_karma()
-					if(isnull(karma)) //Doesn't display anything if karma database is down.
-						return
-					switch(href_list["KarmaBuy2"])
-						if("1")
-							karma_purchase(karma,15,"species","Machine People","Machine")
-						if("2")
-							karma_purchase(karma,30,"species","Kidan")
-						if("3")
-							karma_purchase(karma,30,"species","Grey")
-						if("4")
-							karma_purchase(karma,45,"species","Vox")
-						if("5")
-							karma_purchase(karma,45,"species","Slime People")
-						if("6")
-							karma_purchase(karma,45,"species","Plasmaman")
-						if("7")
-							karma_purchase(karma,30,"species","Drask")
-					return
-				if(href_list["KarmaRefund"])
-					var/type = href_list["KarmaRefundType"]
-					var/job = href_list["KarmaRefund"]
-					var/cost = href_list["KarmaRefundCost"]
-					karmarefund(type,job,cost)
-					return
-
 	switch(href_list["_src_"])
 		if("holder")	hsrc = holder
 		if("usr")		hsrc = mob
@@ -196,11 +138,32 @@
 	if(href_list["link_forum_account"])
 		link_forum_account()
 		return // prevents a recursive loop where the ..() 5 lines after this makes the proc endlessly re-call itself
+	if(href_list["withdraw_consent"])
+		var/choice = alert(usr, "Are you SURE you want to withdraw your consent to the Terms of Service?\nYou will be instantaneously removed from the server and will have to re-accept the Terms of Service.", "Warning", "Yes", "No")
+		if(choice == "Yes")
+			// Update the DB
+			var/datum/db_query/query = SSdbcore.NewQuery("REPLACE INTO privacy (ckey, datetime, consent) VALUES (:ckey, Now(), 0)", list(
+			"ckey" = ckey
+			))
+			if(!query.warn_execute())
+				to_chat(usr, "Well, this is embarassing. We tried to save your ToS withdrawal but the DB failed. Please contact the server host")
+				return
+
+			// I know its a very rare occurance, but I wouldnt doubt people using this to withdraw consent right when sec captures them
+			message_admins("[key_name_admin(usr)] was disconnected due to withdrawing their ToS consent.")
+			to_chat(usr, "<span class='boldannounce'>Your ToS consent has been withdrawn. You have been kicked from the server</span>")
+			del(src)
+
 	switch(href_list["action"])
 		if("openLink")
 			src << link(href_list["link"])
 
 	..()	//redirect to hsrc.Topic()
+
+
+/client/proc/get_display_key()
+	var/fakekey = src?.holder?.fakekey
+	return fakekey ? fakekey : key
 
 /client/proc/is_content_unlocked()
 	if(!prefs.unlock_content)
@@ -286,6 +249,11 @@
 
 	log_client_to_db(tdata) // Make sure our client exists in the DB
 
+	// We have a holder. Inform the relevant places
+	INVOKE_ASYNC(src, .proc/announce_join)
+
+	pai_save = new(src)
+
 	// This is where we load all of the clients stuff from the DB
 	if(SSdbcore.IsConnected())
 		// Load in all our client data from the DB
@@ -326,20 +294,34 @@
 	if(length(related_accounts_cid))
 		log_admin("[key_name(src)] Alts by CID: [jointext(related_accounts_cid, " ")]")
 
+	// This sleeps so it has to go here. Dont fucking move it.
+	SSinstancing.update_playercache(ckey)
+
 	// This has to go here to avoid issues
 	// If you sleep past this point, you will get SSinput errors as well as goonchat errors
 	// DO NOT STUFF RANDOM SQL QUERIES BELOW THIS POINT WITHOUT USING `INVOKE_ASYNC()` OR SIMILAR
 	// YOU WILL BREAK STUFF. SERIOUSLY. -aa07
 	GLOB.clients += src
 
+
 	spawn() // Goonchat does some non-instant checks in start()
 		chatOutput.start()
 
+	var/_2fa_alert = FALSE // This is so we can display the message where it will be seen
 	if(holder)
-		on_holder_add()
-		add_admin_verbs()
-		// Must be async because any sleeps (happen in sql queries) will break connectings clients
-		INVOKE_ASYNC(src, .proc/admin_memo_output, "Show", FALSE, TRUE)
+		if(GLOB.configuration.system.is_production && (holder.rights & R_ADMIN) && prefs._2fa_status == _2FA_DISABLED) // If they are an admin and their 2FA is disabled
+			// No, check_rights() does not work in the above proc, because we dont have a mob yet
+			_2fa_alert = TRUE
+			// This also has to be manually done since no mob to use check_rights() on
+			deadmin()
+			verbs += /client/proc/readmin
+			GLOB.deadmins += ckey
+		else
+			on_holder_add()
+			add_admin_verbs()
+			// Must be async because any sleeps (happen in sql queries) will break connectings clients
+			INVOKE_ASYNC(src, .proc/admin_memo_output, "Show", FALSE, TRUE)
+
 
 	// Forcibly enable hardware-accelerated graphics, as we need them for the lighting overlays.
 	// (but turn them off first, since sometimes BYOND doesn't turn them on properly otherwise)
@@ -412,6 +394,12 @@
 	if(check_rights(R_ADMIN, FALSE, mob)) // Mob is required. Dont even try without it.
 		to_chat(src, "The queue server is currently [SSqueue.queue_enabled ? "<font color='green'>enabled</font>" : "<font color='disabled'>disabled</font>"], with a threshold of <b>[SSqueue.queue_threshold]</b>. This <b>[SSqueue.persist_queue ? "will" : "will not"]</b> persist through rounds.")
 
+	if(_2fa_alert)
+		to_chat(src,"<span class='boldannounce'><big>You do not have 2FA enabled. Admin verbs will be unavailable until you have enabled 2FA.</big></span>") // Very fucking obvious
+
+	// This happens asyncronously
+	karmaholder.processRefunds(mob)
+
 
 /client/proc/is_connecting_from_localhost()
 	var/localhost_addresses = list("127.0.0.1", "::1") // Adresses
@@ -429,12 +417,15 @@
 	return ..()
 
 /client/Destroy()
+	announce_leave() // Do not put this below
 	if(holder)
 		holder.owner = null
 		GLOB.admins -= src
 	GLOB.directory -= ckey
 	GLOB.clients -= src
+	SSinstancing.update_playercache() // Clear us out
 	QDEL_NULL(chatOutput)
+	QDEL_NULL(pai_save)
 	if(movingmob)
 		movingmob.client_mobs_in_contents -= mob
 		UNSETEMPTY(movingmob.client_mobs_in_contents)
@@ -442,6 +433,59 @@
 	Master.UpdateTickRate()
 	..() //Even though we're going to be hard deleted there are still some things that want to know the destroy is happening
 	return QDEL_HINT_HARDDEL_NOW
+
+
+/client/proc/announce_join()
+	if(!holder)
+		return
+
+	if(holder.rights & R_MENTOR)
+		if(SSredis.connected)
+			var/list/mentorcounter = staff_countup(R_MENTOR)
+			var/msg = "**[ckey]** logged in. **[mentorcounter[1]]** mentor[mentorcounter[1] == 1 ? "" : "s"] online."
+			var/list/data = list()
+			data["author"] = "alice"
+			data["source"] = GLOB.configuration.system.instance_id
+			data["message"] = msg
+			SSredis.publish("byond.msay.out", json_encode(data))
+
+	else if(holder.rights & R_BAN)
+		if(SSredis.connected)
+			var/list/admincounter = staff_countup(R_BAN)
+			var/msg = "**[ckey]** logged in. **[admincounter[1]]** admin[admincounter[1] == 1 ? "" : "s"] online."
+			var/list/data = list()
+			data["author"] = "alice"
+			data["source"] = GLOB.configuration.system.instance_id
+			data["message"] = msg
+			SSredis.publish("byond.asay.out", json_encode(data))
+
+/client/proc/announce_leave()
+	if(!holder)
+		return
+
+	if(holder.rights & R_MENTOR)
+		if(SSredis.connected)
+			var/list/mentorcounter = staff_countup(R_MENTOR)
+			var/mentor_count = mentorcounter[1]
+			mentor_count-- // Exclude ourself
+			var/msg = "**[ckey]** logged out. **[mentor_count]** mentor[mentor_count == 1 ? "" : "s"] online."
+			var/list/data = list()
+			data["author"] = "alice"
+			data["source"] = GLOB.configuration.system.instance_id
+			data["message"] = msg
+			SSredis.publish("byond.msay.out", json_encode(data))
+
+	else if(holder.rights & R_BAN)
+		if(SSredis.connected)
+			var/list/admincounter = staff_countup(R_BAN)
+			var/admin_count = admincounter[1]
+			admin_count-- // Exclude ourself
+			var/msg = "**[ckey]** logged out. **[admin_count]** admin[admin_count == 1 ? "" : "s"] online."
+			var/list/data = list()
+			data["author"] = "alice"
+			data["source"] = GLOB.configuration.system.instance_id
+			data["message"] = msg
+			SSredis.publish("byond.asay.out", json_encode(data))
 
 
 /client/proc/donor_loadout_points()
@@ -630,6 +674,7 @@
 	if(fromban)
 		url += "&fwd=appeal"
 		to_chat(src, {"Now opening a window to verify your information with the forums, so that you can appeal your ban. If the window does not load, please copy/paste this link: <a href="[url]">[url]</a>"})
+		to_chat(src, "<span class='boldannounce'>If you are screenshotting this screen for your ban appeal, please blur/draw over the token in the above link.</span>")
 	else
 		to_chat(src, {"Now opening a window to verify your information with the forums. If the window does not load, please go to: <a href="[url]">[url]</a>"})
 	src << link(url)
@@ -821,25 +866,27 @@
 	winset(src, "rpane.forumb", "background-color=#40628a;text-color=#FFFFFF")
 	winset(src, "rpane.rulesb", "background-color=#40628a;text-color=#FFFFFF")
 	winset(src, "rpane.githubb", "background-color=#40628a;text-color=#FFFFFF")
-	/* Mainwindow */
-	winset(src, "mainwindow.saybutton", "background-color=#40628a;text-color=#FFFFFF")
-	winset(src, "mainwindow.mebutton", "background-color=#40628a;text-color=#FFFFFF")
+	winset(src, "rpane.webmap", "background-color=#40628a;text-color=#FFFFFF")
+	/* Outputwindow */
+	winset(src, "outputwindow.saybutton", "background-color=#40628a;text-color=#FFFFFF")
+	winset(src, "outputwindow.mebutton", "background-color=#40628a;text-color=#FFFFFF")
 	///// UI ELEMENTS /////
 	/* Mainwindow */
 	winset(src, "mainwindow", "background-color=#272727")
 	winset(src, "mainwindow.mainvsplit", "background-color=#272727")
 	winset(src, "mainwindow.tooltip", "background-color=#272727")
 	/* Outputwindow */
+	winset(src, "outputwindow", "background-color=#1d1d1d")
 	winset(src, "outputwindow.browseroutput", "background-color=#272727")
 	/* Rpane */
-	winset(src, "rpane", "background-color=#272727")
-	winset(src, "rpane.rpanewindow", "background-color=#272727")
+	winset(src, "rpane", "background-color=#1d1d1d")
+	winset(src, "rpane.rpanewindow", "background-color=#1d1d1d")
 	/* Browserwindow */
 	winset(src, "browserwindow", "background-color=#272727")
 	winset(src, "browserwindow.browser", "background-color=#272727")
 	/* Infowindow */
-	winset(src, "infowindow", "background-color=#272727;text-color=#FFFFFF")
-	winset(src, "infowindow.info", "background-color=#272727;text-color=#FFFFFF;highlight-color=#009900;tab-text-color=#FFFFFF;tab-background-color=#272727")
+	winset(src, "infowindow", "background-color=#1d1d1d;text-color=#FFFFFF")
+	winset(src, "infowindow.info", "background-color=#272727;text-color=#FFFFFF;highlight-color=#009900;tab-text-color=#FFFFFF;tab-background-color=#1d1d1d")
 	// NOTIFY USER
 	to_chat(src, "<span class='notice'>Darkmode Enabled</span>")
 
@@ -853,15 +900,17 @@
 	winset(src, "rpane.forumb", "background-color=none;text-color=#000000")
 	winset(src, "rpane.rulesb", "background-color=none;text-color=#000000")
 	winset(src, "rpane.githubb", "background-color=none;text-color=#000000")
-	/* Mainwindow */
-	winset(src, "mainwindow.saybutton", "background-color=none;text-color=#000000")
-	winset(src, "mainwindow.mebutton", "background-color=none;text-color=#000000")
+	winset(src, "rpane.webmap", "background-color=none;text-color=#000000")
+	/* Outputwindow */
+	winset(src, "outputwindow.saybutton", "background-color=none;text-color=#000000")
+	winset(src, "outputwindow.mebutton", "background-color=none;text-color=#000000")
 	///// UI ELEMENTS /////
 	/* Mainwindow */
 	winset(src, "mainwindow", "background-color=none")
 	winset(src, "mainwindow.mainvsplit", "background-color=none")
 	winset(src, "mainwindow.tooltip", "background-color=none")
 	/* Outputwindow */
+	winset(src, "outputwindow", "background-color=none")
 	winset(src, "outputwindow.browseroutput", "background-color=none")
 	/* Rpane */
 	winset(src, "rpane", "background-color=none")
@@ -937,14 +986,14 @@
   */
 /client/proc/retrieve_byondacc_data()
 	// Do not refactor this to use SShttp, because that requires the subsystem to be firing for requests to be made, and this will be triggered before the MC has finished loading
-	var/list/http[] = world.Export("http://www.byond.com/members/[ckey]?format=text")
+	var/list/http[] = HTTPGet("http://www.byond.com/members/[ckey]?format=text")
 	if(http)
 		var/status = text2num(http["STATUS"])
 
 		if(status == 200)
 			// This is wrapped in try/catch because lummox could change the format on any day without informing anyone
 			try
-				var/list/lines = splittext(file2text(http["CONTENT"]), "\n")
+				var/list/lines = splittext(http["CONTENT"], "\n")
 				var/list/initial_data = list()
 				var/current_index = ""
 				for(var/L in lines)
@@ -1052,6 +1101,22 @@
 		SSambience.ambience_listening_clients[src] = world.time + 10 SECONDS //Just wait 10 seconds before the next one aight mate? cheers.
 	else
 		SSambience.ambience_listening_clients -= src
+
+
+// Verb scoped to the client level so its ALWAYS available
+/client/verb/open_tos()
+	set category = "OOC"
+	set name = "Terms of Service"
+
+	var/output = GLOB.join_tos
+	output += "<hr><p>By withdrawing your consent, you acknowledge that you will be instantaneously kicked from the server and will have to re-accept the Terms of Service. If you do not wish to withdraw your consent at this moment, feel free to close this window.</p>"
+	output += "<p><a href='byond://?src=[UID()];withdraw_consent=1'>Withdraw consent</a></p>"
+	src << browse(output,"window=privacy_consent;size=600x500")
+	var/datum/browser/popup = new(src, "privacy_consent", "<div align='center'>Privacy Consent</div>", 500, 400)
+	popup.set_content(output)
+	popup.open(FALSE)
+	return
+
 
 #undef LIMITER_SIZE
 #undef CURRENT_SECOND

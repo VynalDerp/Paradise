@@ -34,6 +34,7 @@
 		to_chat(src, "<B>Drones</B> <span class='notice'>are the working class, offering the largest plasma storage and generation. They may also evolve again, turning into the dreaded alien queen.</span>")
 		var/alien_caste = alert(src, "Please choose which alien caste you shall belong to.","Hunter","Sentinel","Drone","Nevermind")
 
+
 		var/mob/living/carbon/alien/humanoid/new_xeno
 		switch(alien_caste)
 			if("Hunter")

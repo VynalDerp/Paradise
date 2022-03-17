@@ -20,7 +20,7 @@
 
 	species_traits = list(LIPS, IS_WHITELISTED, CAN_WINGDINGS, NO_HAIR)
 	clothing_flags = HAS_UNDERWEAR | HAS_UNDERSHIRT | HAS_SOCKS
-	bodyflags =  HAS_BODY_MARKINGS
+	bodyflags =  HAS_BODY_MARKINGS | HAS_BODYACC_COLOR
 	dietflags = DIET_HERB
 	has_gender = FALSE
 	reagent_tag = PROCESS_ORG
@@ -91,4 +91,6 @@
 
 /datum/species/grey/get_species_runechat_color(mob/living/carbon/human/H)
 	var/obj/item/organ/internal/eyes/E = H.get_int_organ(/obj/item/organ/internal/eyes)
-	return E.eye_color
+	if(E)
+		return E.eye_color
+	return flesh_color

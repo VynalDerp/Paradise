@@ -24,6 +24,9 @@
 	//Supervisors, who this person answers to directly
 	var/supervisors = ""
 
+	/// Text which is shown to someone in BIG BOLG RED when they spawn. Use for critically important stuff that could make/break a round
+	var/important_information = null
+
 	//Sellection screen color
 	var/selection_color = "#ffffff"
 
@@ -46,8 +49,8 @@
 	//If you have use_age_restriction_for_jobs config option enabled and the database set up, this option will add a requirement for players to be at least minimal_player_age days old. (meaning they first signed in at least that many days before.)
 	var/minimal_player_age = 0
 
-	var/exp_requirements = 0
-	var/exp_type = ""
+	// Assoc list of EXP_TYPE_ defines and the amount of time needed in those departments
+	var/list/exp_map = list()
 
 	var/disabilities_allowed = 1
 	var/transfer_allowed = TRUE // If false, ID computer will always discourage transfers to this job, even if player is eligible
@@ -175,7 +178,7 @@
 
 	if(allow_loadout && H.client && length(H.client.prefs.active_character.loadout_gear))
 		for(var/gear in H.client.prefs.active_character.loadout_gear)
-			var/datum/gear/G = GLOB.gear_datums[gear]
+			var/datum/gear/G = GLOB.gear_datums[text2path(gear) || gear]
 			if(G)
 				var/permitted = FALSE
 
@@ -185,16 +188,13 @@
 				else
 					permitted = TRUE
 
-				if(G.whitelisted && (G.whitelisted != H.dna.species.name || !is_alien_whitelisted(H, G.whitelisted)))
-					permitted = FALSE
-
 				if(!permitted)
-					to_chat(H, "<span class='warning'>Your current job or whitelist status does not permit you to spawn with [gear]!</span>")
+					to_chat(H, "<span class='warning'>Your current job or whitelist status does not permit you to spawn with [G.display_name]!</span>")
 					continue
 
 				if(G.slot)
 					if(H.equip_to_slot_or_del(G.spawn_item(H), G.slot, TRUE))
-						to_chat(H, "<span class='notice'>Equipping you with [gear]!</span>")
+						to_chat(H, "<span class='notice'>Equipping you with [G.display_name]!</span>")
 					else
 						gear_leftovers += G
 				else
@@ -217,7 +217,7 @@
 				if(isturf(placed_in))
 					to_chat(H, "<span class='notice'>Placing [G.display_name] on [placed_in]!</span>")
 				else
-					to_chat(H, "<span class='notice'>Placing [G.display_name] in [placed_in.name].</span>")
+					to_chat(H, "<span class='notice'>Placing [G.display_name] in your [placed_in.name].</span>")
 				continue
 			if(H.equip_to_appropriate_slot(G))
 				to_chat(H, "<span class='notice'>Placing [G.display_name] in your inventory!</span>")
@@ -269,7 +269,7 @@
 /datum/job/proc/would_accept_job_transfer_from_player(mob/player)
 	if(!transfer_allowed)
 		return FALSE
-	if(!guest_jobbans(title)) // actually checks if job is a whitelisted position
+	if(!check_job_karma(title))
 		return TRUE
 	if(!istype(player))
 		return FALSE

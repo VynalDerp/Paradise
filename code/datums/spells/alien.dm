@@ -1,10 +1,8 @@
-/obj/effect/proc_holder/spell/targeted/click/alien/
+/obj/effect/proc_holder/spell/alien/
 	name = "Alien Spell"
 	desc = "If you see this, someone messed up! Please report it!"
 	action_icon = 'icons/mob/actions/actions_xeno.dmi'
-	auto_target_single = FALSE
 	clothes_req = FALSE
-	range = 1
 	cooldown_min = 1
 	action_background_icon_state = "bg_alien"
 	var/required_plasma = 0
@@ -13,7 +11,7 @@
 	//if(user.get_organ_slot("plasmavessel") = TRUE)
 		//var/plasma = 100
 
-/obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin //functioning spell code babeeeeee
+/obj/effect/proc_holder/spell/alien/neurotoxin //functioning spell code babeeeeee
 	name = "Neurotoxin"
 	desc = "Spit a glob of neurotoxin at your enemies."
 
@@ -24,25 +22,26 @@
 	sound = 'sound/magic/fireball.ogg'
 	action_background_icon_state = "bg_alien"
 
-	click_radius = -1
-	allowed_type = /atom
 	clothes_req = FALSE
-	range = 20
 	cooldown_min = 5
 	required_plasma = 100
 
 	selection_activated_message		= "<span class='alertalien'>You feel your neurotoxic glands fill! <B>Left-click to spit at a target!</B></span>"
 	selection_deactivated_message	= "<span class='alertalien'>You feel your neurotoxic glands empty.</span>"
-	allowed_type = /atom
 
 	active = FALSE
 
-/obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin/update_icon()
+/obj/effect/proc_holder/spell/alien/neurotoxin/create_new_targeting()
+	var/datum/spell_targeting/clicked_atom/C = new()
+	C.range = 20
+	return C
+
+/obj/effect/proc_holder/spell/alien/neurotoxin/update_icon()
 	neurotoxin_on_click = !neurotoxin_on_click
 	action.button_icon_state = "alien_neurotoxin_[neurotoxin_on_click ? "1":"0"]"
 	action.UpdateButtonIcon()
 
-/obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin/cast(list/targets, mob/living/user = usr)
+/obj/effect/proc_holder/spell/alien/neurotoxin/cast(list/targets, mob/living/user = usr)
 	var/target = targets[1] //There is only ever one target
 	var/turf/T = user.loc
 	var/turf/U = get_step(user, user.dir) // Get the tile infront of the move, based on their direction
@@ -63,7 +62,7 @@
 
 	return TRUE
 
-/obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin
+/obj/effect/proc_holder/spell/alien/strong_neurotoxin
 	name = "Strong Neurotoxin"
 	desc = "Spit a glob of strong neurotoxin at your enemies."
 
@@ -74,26 +73,21 @@
 	/*action_background_icon_state = "bg_alien"*/
 	sound = 'sound/magic/fireball.ogg'
 
-	click_radius = -1
-	allowed_type = /atom
-	auto_target_single = FALSE
 	clothes_req = FALSE
-	range = 20
 	cooldown_min = 5
 	required_plasma = 100
 
 	selection_activated_message		= "<span class='alertalien'>You feel your strong neurotoxic glands fill! <B>Left-click to spit at a target!</B></span>"
 	selection_deactivated_message	= "<span class='alertalien'>You feel your strong neurotoxic glands empty.</span>"
-	allowed_type = /atom
 
 	active = FALSE
 
-/obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin/update_icon()
+/obj/effect/proc_holder/spell/alien/strong_neurotoxin/update_icon()
 	strong_neurotoxin_on_click = !strong_neurotoxin_on_click
 	action.button_icon_state = "alien_neurotoxin_[strong_neurotoxin_on_click ? "1":"0"]"
 	action.UpdateButtonIcon()
 
-/obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin/cast(list/targets, mob/living/user = usr)
+/obj/effect/proc_holder/spell/alien/strong_neurotoxin/cast(list/targets, mob/living/user = usr)
 	var/target = targets[1] //There is only ever one target
 	var/turf/T = user.loc
 	var/turf/U = get_step(user, user.dir) // Get the tile infront of the move, based on their direction
@@ -113,7 +107,6 @@
 	desc = "If you see this, someone messed up! Please report it!"
 	action_icon = 'icons/mob/actions/actions_xeno.dmi'
 	clothes_req = FALSE
-	range = 1
 	cooldown_min = 1
 	action_background_icon_state = "bg_alien"
 	var/required_plasma = 0
@@ -121,7 +114,6 @@
 /obj/effect/proc_holder/spell/aoe_turf/alien/plantweeds
 	name = "Plant Weeds"
 	desc = "Plants some alien weeds"
-	range = 1
 	charge_max = 250
 	clothes_req = 0
 	action_icon_state = "alien_plant"

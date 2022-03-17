@@ -169,10 +169,10 @@
 
 /obj/item/organ/internal/xenos/neurotoxin/insert(mob/living/carbon/M, special = 0)
 	..()
-	M.AddSpell(new /obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin)
+	M.AddSpell(new /obj/effect/proc_holder/spell/alien/neurotoxin)
 
 /obj/item/organ/internal/xenos/neurotoxin/remove(mob/living/carbon/M, special = 0)
-	M.RemoveSpell(/obj/effect/proc_holder/spell/targeted/click/alien/neurotoxin)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/alien/neurotoxin)
 	. = ..()
 
 /obj/item/organ/internal/xenos/large_neurotoxin
@@ -185,10 +185,10 @@
 
 /obj/item/organ/internal/xenos/large_neurotoxin/insert(mob/living/carbon/M, special = 0)
 	..()
-	M.AddSpell(new /obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin)
+	M.AddSpell(new /obj/effect/proc_holder/spell/alien/strong_neurotoxin)
 
 /obj/item/organ/internal/xenos/large_neurotoxin/remove(mob/living/carbon/M, special = 0)
-	M.RemoveSpell(/obj/effect/proc_holder/spell/targeted/click/alien/strong_neurotoxin)
+	M.RemoveSpell(/obj/effect/proc_holder/spell/alien/strong_neurotoxin)
 	. = ..()
 
 /obj/item/organ/internal/xenos/resinspinner
